@@ -1,56 +1,77 @@
 name: mir-kiosk-desktop-example
 version: '0.1'
-summary: example (kodi) desktop kiosk
+summary: example (zoom) desktop kiosk, using mir-kiosk-x11
 description: |
-  example (kodi) desktop kiosk
+  example (zoom) desktop kiosk, using mir-kiosk-x11
 base: core20
 confinement: strict
 grade: devel
 
 apps:
   mir-kiosk-desktop-example:
+#    daemon: simple
+#    restart-condition: always
     command-chain:
       - env-setup
-    command: usr/local/bin/x11_kiosk_launch $SNAP/usr/bin/kodi
+    command: usr/local/bin/x11_kiosk_launch $SNAP/usr/bin/zoom
 
 architectures:
   - build-on: amd64
 
 parts:
-  ppa-setup:
-    plugin: nil
-    # Use the upstream team-xbmc PPA
-    override-pull: |
-      sudo apt --assume-yes install software-properties-common
-      sudo add-apt-repository -yu ppa:team-xbmc/ppa
-      snapcraftctl pull
-
-  kodi:
-    after: [ ppa-setup ]
-    plugin: nil
-    override-pull: |
-      snapcraftctl pull
-      kodi_version=`LANG=C apt-cache policy kodi-wayland | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
-      snapcraftctl set-version $kodi_version
+  zoom:
+    plugin: dump
+    source: https://zoom.us/client/latest/zoom_amd64.deb
+    override-build: |
+      rm -f $SNAPCRAFT_PART_BUILD/usr/bin/zoom
+      echo "QT_QPA_PLATFORM=xcb LD_LIBRARY_PATH=\$SNAP/opt/zoom:\$LD_LIBRARY_PATH \$SNAP/opt/zoom/ZoomLauncher" > $SNAPCRAFT_PART_BUILD/usr/bin/zoom
+      chmod +x $SNAPCRAFT_PART_BUILD/usr/bin/zoom
+      sed -i s/D_LIBRAR/XXXXXXXX/g opt/zoom/ZoomLauncher
+      snapcraftctl build
     stage-packages:
-      - kodi
-      - kodi-wayland
-      - kodi-visualization-spectrum
-      - kodi-repository-kodi
-      - kodi-inputstream-adaptive
-      - python
-      - samba-libs
-      - samba-common-bin
-      - samba-common
-      - libfstrcmp0
+      - libnspr4
+      - libnss3
+      - libpulse-mainloop-glib0
+      - libqt53dcore5
+      - libqt53dinput5
+      - libqt53dlogic5
+      - libqt53dquick5
+      - libqt53dquickscene2d5
+      - libqt53drender5
+      - libqt5concurrent5
+      - libqt5core5a
+      - libqt5dbus5
+      - libqt5gui5
+      - libqt5multimedia5
+      - libqt5multimedia5-plugins
+      - libqt5network5
+      - libqt5printsupport5
+      - libqt5qml5
+      - libqt5quick5
+      - libqt5quickcontrols2-5
+      - libqt5quickparticles5
+      - libqt5quicktemplates2-5
+      - libqt5sql5
+      - libqt5waylandclient5
+      - libqt5widgets5
+      - libqt5xmlpatterns5
+      - libxcb-image0
+      - libxcb-keysyms1
+      - libxcb-randr0
+      - libxcb-xtest0
+      - libx11-6
+      - libxtst6
+      - pulseaudio-utils
+      - libqt5gamepad5
+      - libxi6
+      - libatk1.0-0
+      - libcairo-gobject2
+      - libcairo2
+      - libgtk-3-0
+      - libgdk-pixbuf2.0-0
+      - libpango-1.0-0
+      - libpangocairo-1.0-0
       - libpulse0
-      - libaudio2
-      - libsndio7.0
-
-  mesa:
-    plugin: nil
-    stage-packages:
-      - va-driver-all
 
   mir-kiosk-desktop:
     plugin: nil
@@ -65,7 +86,7 @@ parts:
     source: connect-interfaces
     override-build: |
       snapcraftctl build
-      MY_PROJECT_INTERFACES="hardware-observe login-session-control mount-observe network-observe system-observe wayland"
+      MY_PROJECT_INTERFACES="camera audio-playback audio-record hardware-observe login-session-control wayland"
       sed s/\$\{MY_PROJECT_INTERFACES}/"${MY_PROJECT_INTERFACES}"/g --in-place $SNAPCRAFT_PART_INSTALL/connect-interfaces
       sed s/\$\{SNAPCRAFT_PROJECT_NAME}/${SNAPCRAFT_PROJECT_NAME}/g --in-place $SNAPCRAFT_PART_INSTALL/connect-interfaces
 
@@ -80,34 +101,6 @@ layout:
     bind: $SNAP/usr/share/fonts
   /etc/fonts:
     bind: $SNAP/etc/fonts
-  /etc/glvnd:
-    bind: $SNAP/etc/glvnd
-  /usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri:
-    bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
-  /usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/kodi:
-    bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/kodi
-  /usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/pulseaudio:
-    bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/pulseaudio
-  /usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/samba:
-    bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/samba
-  /usr/share/glvnd:
-    bind: $SNAP/usr/share/glvnd
-  /usr/share/kodi:
-    bind: $SNAP/usr/share/kodi
-  /usr/share/samba:
-    bind: $SNAP/usr/share/samba
-
-environment:
-  SHELL: bash
-  LC_ALL: C.UTF-8
-  LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}:${SNAP}/usr/lib/:/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/pulseaudio:/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/samba
-  PATH: $SNAP/bin/:$SNAP/usr/bin/:${PATH}
-  # XDG config
-  XDG_CACHE_HOME:  $SNAP_USER_COMMON/.cache
-  XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
-  # Prep Kodi
-  WINDOWING: wayland
-  PULSE_SERVER: unix:$XDG_RUNTIME_DIR/../pulse/native
 
 plugs:
   opengl:         # For Mir
@@ -115,12 +108,6 @@ plugs:
   network-bind:   # For Mir (to serve X11)
   login-session-control: # To start a desktop session
   hardware-observe: # To start a desktop session
-  # For Kodi...
-  audio-playback:
-  avahi-observe:
-  locale-control:
-  mount-observe:
-  network-observe:
-  removable-media:
-  shutdown:
-  system-observe:
+  camera:         # For Zoom
+  audio-playback: # For Zoom
+  audio-record:   # For Zoom
