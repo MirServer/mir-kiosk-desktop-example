@@ -1,0 +1,3 @@
+#!/bin/sh
+
+for PLUG in ${MY_PROJECT_INTERFACES}; do sudo snap connect ${SNAPCRAFT_PROJECT_NAME}:${PLUG}; done
