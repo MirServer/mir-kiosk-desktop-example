@@ -54,7 +54,7 @@ parts:
 
   mir-kiosk-desktop:
     plugin: nil
-    stage-snaps: [mir-kiosk-desktop/latest/edge]
+    stage-snaps: [mir-kiosk-desktop]
     override-build: |
       snapcraftctl build
       sed s/\$\{SNAPCRAFT_PROJECT_NAME}/${SNAPCRAFT_PROJECT_NAME}/g --in-place $SNAPCRAFT_PART_INSTALL/desktop/setup
