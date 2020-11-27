@@ -9,8 +9,6 @@ grade: devel
 
 apps:
   mir-kiosk-desktop-example:
-#    daemon: simple
-#    restart-condition: always
     command-chain:
       - env-setup
     command: usr/local/bin/x11_kiosk_launch $SNAP/usr/bin/zoom
