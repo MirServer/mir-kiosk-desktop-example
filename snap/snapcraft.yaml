@@ -46,10 +46,6 @@ parts:
       - libpulse0
       - libaudio2
       - libsndio7.0
-
-  mesa:
-    plugin: nil
-    stage-packages:
       - va-driver-all
 
   mir-kiosk-desktop:
